@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Patient Record Management System</h1>
+
+<h3>Add Patient</h3>
+
+<input id="name" placeholder="Name">
+<input id="age" placeholder="Age">
+<button onclick="addPatient()">Add</button>
+
+<br><br>
+
+<button onclick="loadPatients()">Load Patients</button>
+
+<pre id="output"></pre>
+
+<script>
+function loadPatients() {
+  fetch("http://localhost:3000/patients")
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("output").innerText =
+        JSON.stringify(data, null, 2);
+    });
+}
+
+function addPatient() {
+  fetch("http://localhost:3000/add-patient", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      id: Date.now(),
+      name: document.getElementById("name").value,
+      age: document.getElementById("age").value
+    })
+  })
+  .then(() => alert("Patient Added"));
+}
+</script>
+
+</body>
+</html>
