@@ -1,61 +1,72 @@
 
 const express = require("express");
-const app = express();
 const cors = require("cors");
-app.use(cors());
-// Middleware to read JSON data
+
+const app = express();
+
 app.use(express.json());
-
-// In-memory patient data
-let patients = [
-  { id: 1, name: "John Doe", age: 30 },
-  { id: 2, name: "Alice", age: 25 }
-];
-
-// Home route
+app.use(cors());
 app.get("/", (req, res) => {
   res.send("PRMS Backend Running Successfully");
 });
 
-// Get single patient
-app.get("/patient", (req, res) => {
-  res.json({
-    id: 1,
-    name: "John Doe",
-    age: 30,
-    condition: "Healthy"
-  });
-});
+let patients = [];
 
-// Get all patients
+// GET all patients
 app.get("/patients", (req, res) => {
   res.json(patients);
 });
 
-// Add new patient (POST)
-app.post("/add-patient", (req, res) => {
-  const newPatient = req.body;
+// ADD patient
+app.post("/patients", (req, res) => {
+  const patient = {
+    id: Date.now(),
+    name: req.body.name,
+    age: req.body.age,
+    createdAt: new Date()
+  };
 
-  patients.push(newPatient);
-
-  res.json({
-    message: "Patient added successfully",
-    data: newPatient
-  });
+  patients.push(patient);
+  res.json(patient);
 });
 
-// Delete patient (BONUS - extra marks)
-app.delete("/delete-patient/:id", (req, res) => {
-  const id = parseInt(req.params.id);
+// SEARCH patient
+app.get("/patients/search", (req, res) => {
+  const name = req.query.name || "";
+
+  const result = patients.filter(p =>
+    p.name.toLowerCase().includes(name.toLowerCase())
+  );
+
+  res.json(result);
+});
+
+// UPDATE patient
+app.put("/patients/:id", (req, res) => {
+  const id = Number(req.params.id);
+  const { name, age } = req.body;
+
+  const patient = patients.find(p => p.id === id);
+
+  if (patient) {
+    patient.name = name;
+    patient.age = age;
+    res.json(patient);
+  } else {
+    res.status(404).json({ message: "Patient not found" });
+  }
+});
+
+// DELETE patient
+app.delete("/patients/:id", (req, res) => {
+  const id = Number(req.params.id);
 
   patients = patients.filter(p => p.id !== id);
 
-  res.json({
-    message: "Patient deleted successfully"
-  });
+  res.json({ message: "Deleted successfully" });
 });
 
-// Start server
+// SERVER
 app.listen(3000, () => {
   console.log("Server running on http://localhost:3000");
 });

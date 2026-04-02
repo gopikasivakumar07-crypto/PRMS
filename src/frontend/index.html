@@ -1,45 +1,154 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>Advanced PRMS</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f4f6f8;
+      text-align: center;
+    }
+
+    .box {
+      background: white;
+      padding: 15px;
+      margin: 10px auto;
+      width: 400px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px gray;
+    }
+
+    input {
+      padding: 8px;
+      margin: 5px;
+      width: 80%;
+    }
+
+    button {
+      padding: 8px 12px;
+      margin: 5px;
+      background: #3498db;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #2980b9;
+    }
+
+    table {
+      margin: auto;
+      border-collapse: collapse;
+      width: 80%;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid black;
+      padding: 8px;
+    }
+  </style>
+</head>
+
 <body>
 
-<h1>Patient Record Management System</h1>
+<h1>Advanced Patient Record Management System</h1>
 
-<h3>Add Patient</h3>
+<div class="box">
+  <h3>Add Patient</h3>
+  <input id="name" placeholder="Name">
+  <input id="age" placeholder="Age">
+  <button onclick="addPatient()">Add</button>
+</div>
 
-<input id="name" placeholder="Name">
-<input id="age" placeholder="Age">
-<button onclick="addPatient()">Add</button>
+<div class="box">
+  <h3>Search Patient</h3>
+  <input id="search" placeholder="Search name">
+  <button onclick="searchPatient()">Search</button>
+  <button onclick="loadPatients()">Reset</button>
+</div>
 
-<br><br>
-
-<button onclick="loadPatients()">Load Patients</button>
-
-<pre id="output"></pre>
+<table id="table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Age</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
 <script>
+
 function loadPatients() {
   fetch("http://localhost:3000/patients")
     .then(res => res.json())
-    .then(data => {
-      document.getElementById("output").innerText =
-        JSON.stringify(data, null, 2);
-    });
+    .then(showData);
+}
+
+function showData(data) {
+  const tbody = document.querySelector("tbody");
+  tbody.innerHTML = "";
+
+  data.forEach(p => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${p.id}</td>
+        <td>${p.name}</td>
+        <td>${p.age}</td>
+        <td>
+          <button onclick="deletePatient(${p.id})">Delete</button>
+          <button onclick="editPatient(${p.id}, '${p.name}', ${p.age})">Edit</button>
+        </td>
+      </tr>
+    `;
+  });
 }
 
 function addPatient() {
-  fetch("http://localhost:3000/add-patient", {
+  fetch("http://localhost:3000/patients", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
+    headers: {"Content-Type": "application/json"},
     body: JSON.stringify({
-      id: Date.now(),
       name: document.getElementById("name").value,
       age: document.getElementById("age").value
     })
   })
-  .then(() => alert("Patient Added"));
+  .then(loadPatients);
 }
+
+function deletePatient(id) {
+  fetch(`http://localhost:3000/patients/${id}`, {
+    method: "DELETE"
+  })
+  .then(loadPatients);
+}
+
+function searchPatient() {
+  const name = document.getElementById("search").value;
+
+  fetch(`http://localhost:3000/patients/search?name=${name}`)
+    .then(res => res.json())
+    .then(showData);
+}
+
+function editPatient(id, oldName, oldAge) {
+  const name = prompt("Enter new name", oldName);
+  const age = prompt("Enter new age", oldAge);
+
+  fetch(`http://localhost:3000/patients/${id}`, {
+    method: "PUT",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ name, age })
+  })
+  .then(loadPatients);
+}
+
+loadPatients();
+
 </script>
 
 </body>
